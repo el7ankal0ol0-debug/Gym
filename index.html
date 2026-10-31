@@ -31,3 +31,214 @@ button{font:inherit;cursor:pointer}
 .wk:first-of-type{border-top:0}
 .wk b{min-width:96px}.wk span{flex:1;text-align:right;color:var(--ac);font-weight:600}
 .wk.rest{cursor:default}.wk.rest span{color:var(--mu);font-weight:400}
+.day h3{margin:0;font-size:18px;color:var(--ac)}.day .m{color:var(--mu);font-size:14px}
+.day .on{font-size:13px;font-weight:700;margin-bottom:6px}
+.ex{padding:10px 0;border-top:1px solid var(--bd)}
+.top{display:flex;align-items:center;gap:10px}
+.top b{font-weight:600;flex:1}
+.vid{flex:none;text-decoration:none;color:#fff;background:var(--ac);border-radius:8px;padding:3px 10px;font-size:13px;font-weight:700}
+.top em{font-style:normal;font-weight:700;background:var(--bg);border-radius:8px;padding:2px 10px;white-space:nowrap;font-size:14px}
+.meta{font-size:13px;color:var(--mu);margin:4px 0 0}
+.set{display:flex;align-items:center;gap:8px;margin:6px 0 0}
+.set span{width:50px;font-size:13px;color:var(--mu)}
+.set input[type=number]{width:90px;padding:8px 10px}
+.set.ok span{color:var(--ac);font-weight:700}
+.meta a{color:var(--ac);text-decoration:none}
+.note{background:var(--card);border:1px dashed var(--ac);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.lk{background:none;border:0;color:var(--mu);padding:8px 0;margin-right:14px;text-decoration:underline}
+.cn{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cg i{font-style:normal;text-align:center;font-size:12px;color:var(--mu)}
+.tr{background:#2f6df6}.rs{background:#e5484d}
+.cd{border:2px solid transparent;border-radius:10px;padding:9px 0;color:#fff;font-weight:700}
+.cd.sel{border-color:var(--tx)}.cd.tdy{text-decoration:underline}
+.lg{margin-top:10px;font-size:13px;color:var(--mu)}
+.lg span{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin:0 6px 0 10px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+/* key: [name, sets, equipment, alternatives separated by | ] */
+var E={
+bp:["Barbell Bench Press","4×8","Barbell, flat bench, rack","Dumbbell Bench Press|Machine Chest Press|Push-Up"],
+ip:["Incline Dumbbell Press","3×10","Dumbbells, incline bench","Incline Barbell Press|Incline Machine Press|Incline Push-Up"],
+cf:["Cable Fly","3×12","Cable machine","Pec Deck Machine|Dumbbell Fly|Push-Up"],
+oh:["Overhead Press","4×8","Barbell, rack","Dumbbell Shoulder Press|Machine Shoulder Press|Arnold Press"],
+lr:["Lateral Raise","3×15","Dumbbells","Cable Lateral Raise|Machine Lateral Raise|Band Lateral Raise"],
+rd:["Rear Delt Fly","3×15","Dumbbells or pec deck","Reverse Pec Deck|Cable Face Pull|Band Pull-Apart"],
+pd:["Triceps Pushdown","3×12","Cable machine, rope or bar","Dumbbell Kickback|Bench Dip|Close-Grip Push-Up"],
+sk:["Skull Crusher","3×10","EZ-bar, flat bench","Dumbbell Skull Crusher|Cable Overhead Extension|Close-Grip Bench Press"],
+oe:["Overhead Triceps Extension","3×12","One dumbbell or cable","Cable Rope Overhead Extension|EZ-Bar Overhead Extension|Triceps Dip Machine"],
+pu:["Pull-Up","3×max","Pull-up bar","Assisted Pull-Up Machine|Lat Pulldown|Band-Assisted Pull-Up"],
+br:["Barbell Row","4×8","Barbell","Dumbbell Row|T-Bar Row|Chest-Supported Row"],
+ld:["Lat Pulldown","4×10","Cable machine, lat bar","Pull-Up|Assisted Pull-Up Machine|Single-Arm Cable Pulldown"],
+sr:["Seated Cable Row","3×10","Cable machine, V-handle","Machine Row|Dumbbell Row|Band Row"],
+pv:["Dumbbell Pullover","3×12","One dumbbell, flat bench","Cable Straight-Arm Pulldown|Machine Pullover|Barbell Pullover"],
+bc:["Barbell Curl","3×10","Barbell or EZ-bar","Dumbbell Curl|Cable Curl|Preacher Curl Machine"],
+hc:["Hammer Curl","3×12","Dumbbells","Cable Rope Hammer Curl|Cross-Body Hammer Curl|Reverse Curl"],
+sq:["Barbell Squat","4×8","Barbell, squat rack","Goblet Squat|Smith Machine Squat|Hack Squat"],
+fs:["Front Squat","3×8","Barbell, squat rack","Goblet Squat|Leg Press|Smith Machine Front Squat"],
+lp:["Leg Press","3×12","Leg press machine","Hack Squat|Goblet Squat|Bulgarian Split Squat"],
+le:["Leg Extension","3×12","Leg extension machine","Sissy Squat|Band Leg Extension|Walking Lunge"],
+lc:["Lying Leg Curl","3×12","Leg curl machine","Seated Leg Curl|Dumbbell Leg Curl|Stability Ball Leg Curl"],
+rl:["Romanian Deadlift","3×10","Barbell or dumbbells","Dumbbell Romanian Deadlift|Good Morning|Cable Pull-Through"],
+ht:["Hip Thrust","3×10","Barbell, bench","Glute Bridge|Machine Hip Thrust|Cable Pull-Through"],
+ca:["Standing Calf Raise","4×15","Calf machine or Smith machine","Seated Calf Raise|Leg Press Calf Raise|Single-Leg Calf Raise"],
+cr:["Crunch","3×15","Bodyweight","Cable Crunch|Decline Sit-Up|Machine Crunch"],
+pl:["Plank","3×45 sec","Bodyweight","Dead Bug|Ab Wheel Rollout|Hanging Knee Raise"]
+};
+/* w = the workout for Mon..Sun (index into days, -1 = rest) */
+var S=[
+{n:"Push / Pull / Legs",d:"3 training days, 1 rest day, repeating",cy:1,w:[0,1,2,0,1,2,-1],days:[
+["Push Day","Chest · Shoulders · Triceps","bp ip oh lr pd oe"],
+["Pull Day","Back · Biceps","pu br ld sr rd bc hc"],
+["Leg Day","Quads · Hamstrings · Calves","sq rl lp lc le ca"]]},
+{n:"Arnold Split",d:"3 training days, 1 rest day, repeating",cy:1,w:[0,1,2,0,1,2,-1],days:[
+["Chest & Back","Upper body","bp ip cf pu br pv"],
+["Shoulders & Arms","Delts · Biceps · Triceps","oh lr rd bc hc sk pd"],
+["Legs & Abs","Lower body + core","sq rl lp lc ca cr"]]},
+{n:"Full Body",d:"3 days a week with rest days between",w:[0,-1,1,-1,2,-1,-1],days:[
+["Full Body A","Whole body","sq bp br oh bc pl"],
+["Full Body B","Whole body","rl ip ld lr pd cr"],
+["Full Body C","Whole body","lp fs sr rd hc ca"]]},
+{n:"Upper / Lower",d:"4 days a week",w:[0,1,-1,2,3,-1,-1],days:[
+["Upper A","Chest · Back · Shoulders · Arms","bp br oh ld bc pd"],
+["Lower A","Quads · Hamstrings · Core","sq rl le lc ca cr"],
+["Upper B","Chest · Back · Shoulders · Arms","ip sr lr pu hc oe"],
+["Lower B","Quads · Glutes · Core","lp ht lc ca pl"]]},
+{n:"Anterior / Posterior",d:"4 days a week",w:[0,1,-1,0,1,-1,-1],days:[
+["Anterior (front)","Chest · Shoulders · Quads · Biceps","bp ip oh lr fs le bc cr"],
+["Posterior (back)","Back · Hamstrings · Glutes · Triceps","rl ht lc br ld rd pd ca"]]}
+];
+var D=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+var app=document.getElementById("app"),u={n:"",a:0,h:0};
+function $(i){return document.getElementById(i)}
+/* Paste direct video links here: "Exercise Name":"https://www.youtube.com/watch?v=XXXX"
+   Any exercise or alternative listed here opens that exact video; the rest open a YouTube search. */
+var V={
+/* "Barbell Bench Press":"https://www.youtube.com/watch?v=XXXX", */
+};
+function yt(q){return V[q]||"https://www.youtube.com/results?search_query="+encodeURIComponent(q+" proper form tutorial")}
+var DB=(function(){try{return JSON.parse(localStorage.getItem("gc1"))||{}}catch(e){return{}}})();
+DB.log=DB.log||{};
+var cd=td(),cl=null,cs="local",tm;
+function td(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function ok(s){return s&&s[0]!=null&&s[0]!==""&&s[1]!=null&&s[1]!==""}
+function fm(a){return a.filter(ok).map(function(s){return s[0]+" kg × "+s[1]}).join(" · ")}
+function stat(){var e=$("st");if(!e)return;e.textContent=cs==="cloud"?"☁️ Saved to your account. Your log follows you on any device.":cs==="err"?"⚠️ Could not reach the database. Saved on this device only.":"Saved on this device. Syncing to your account…"}
+function ls(){try{localStorage.setItem("gc1",JSON.stringify(DB))}catch(e){}}
+function dd(d){var o={};Object.keys(DB.log).forEach(function(k){var a=DB.log[k][d];if(a)o[k]=a.map(function(s){return{w:s[0],r:s[1]}})});
+return cl.db.doc(cl.base+"/d"+d.replace(/-/g,"")).set({date:d,log:o})}
+function pf(){return cl.db.doc(cl.base+"/profile").set({u:DB.u||{},s:DB.s==null?-1:DB.s})}
+function sv(d){ls();if(!cl)return;(d?dd(d):pf()).then(function(){cs="cloud";stat()},function(){cs="err";stat()})}
+function qs(d){clearTimeout(tm);tm=setTimeout(function(){sv(d)},700)}
+function sets(k,t){
+var n=parseInt(t),L=DB.log[k]||{},T=L[cd]||[],ds=Object.keys(L).filter(function(d){return d<cd&&(L[d]||[]).some(ok)}).sort(),p=ds.length?L[ds[ds.length-1]]:[],h="";
+if(ds.length)h+='<div class="meta">Last time ('+ds[ds.length-1]+'): '+fm(p)+'</div>';
+for(var i=0;i<n;i++){var c=T[i]||[],q=p[i]||[];
+h+='<div class="set'+(ok(c)?' ok':'')+'"><span>Set '+(i+1)+'</span><input type="number" inputmode="decimal" step="any" min="0" data-k="'+k+'" data-i="'+i+'" data-t="0" placeholder="'+(q[0]||"kg")+'" value="'+(c[0]||"")+'"><input type="number" inputmode="numeric" min="0" data-k="'+k+'" data-i="'+i+'" data-t="1" placeholder="'+(q[1]||"reps")+'" value="'+(c[1]||"")+'"></div>'}
+return h}
+app.addEventListener("input",function(e){var t=e.target,k=t.getAttribute("data-k");if(!k)return;
+var L=DB.log[k]=DB.log[k]||{},T=L[cd]=L[cd]||[],i=+t.getAttribute("data-i");
+T[i]=T[i]||["",""];T[i][+t.getAttribute("data-t")]=t.value;
+for(var j=0;j<T.length;j++)T[j]=T[j]||["",""];
+t.parentNode.className="set"+(ok(T[i])?" ok":"");ls();qs(cd)});
+function cloud(){
+if(!window.claude||!claude.use)return;
+Promise.all([claude.use("db"),claude.use("user")]).then(function(r){
+if(!r[0]||!r[1])return;
+return r[1].id().then(function(id){
+if(!id)return;
+cl={db:r[0],base:"data/users/"+id};
+return cl.db.collection(cl.base).get().then(function(q){
+var days={},loc={},pr=null;
+Object.keys(DB.log).forEach(function(k){Object.keys(DB.log[k]).forEach(function(d){loc[d]=1})});
+q.docs.forEach(function(s){var d=s.data();if(!d)return;
+if(d.date){days[d.date]=1;Object.keys(d.log||{}).forEach(function(k){(DB.log[k]=DB.log[k]||{})[d.date]=d.log[k].map(function(x){return[x.w,x.r]})})}
+else if(d.u&&d.u.n)pr=d});
+Object.keys(loc).forEach(function(d){if(!days[d])dd(d)});
+if(pr){if(!DB.u)DB.u=pr.u;if(DB.s==null&&pr.s>=0)DB.s=pr.s}
+else if(DB.u)pf();
+ls();cs="cloud";
+if($("pm")){if(document.activeElement===document.body)plan(DB.s)}
+else if($("n")&&!$("n").value&&DB.u&&DB.s!=null&&S[DB.s]){u=DB.u;plan(DB.s)}
+stat()})})}).catch(function(){cs="err";stat()})}
+function prog(){
+var ds={},tv=0,ts=0,rows="";
+Object.keys(E).forEach(function(k){var L=DB.log[k];if(!L)return;
+var best=null,days=Object.keys(L).sort();
+days.forEach(function(d){var a=L[d].filter(ok);if(!a.length)return;
+var o=ds[d]=ds[d]||{s:0,v:0,e:0};o.e++;
+a.forEach(function(s){var w=+s[0],r=+s[1];ts++;tv+=w*r;o.s++;o.v+=w*r;if(!best||w>best[0]||(w===best[0]&&r>best[1]))best=[w,r]})});
+if(!best)return;
+rows+='<div class="card"><h2>'+E[k][0]+'</h2><div style="font-weight:700;color:var(--ac);margin-bottom:4px">Best: '+best[0]+' kg × '+best[1]+'</div>';
+days.slice(-5).reverse().forEach(function(d){var f=fm(L[d]);if(f)rows+='<div class="meta" style="margin:2px 0">'+d+': '+f+'</div>'});
+rows+='</div>'});
+var dk=Object.keys(ds).sort().reverse(),dl=dk.map(function(d){var o=ds[d];return'<div class="wk" data-d="'+d+'"><b>'+d+'</b><span>'+o.e+' exercises · '+o.s+' sets · '+Math.round(o.v)+' kg</span></div>'}).join("");
+app.innerHTML='<h1>📈 History</h1><div class="card"><b>'+dk.length+'</b> workout days · <b>'+ts+'</b> sets · <b>'+Math.round(tv)+'</b> kg total volume</div>'+(dl?'<div class="card"><h2>Your workout days</h2>'+dl+'</div>':'')+(rows?'<h2 style="margin:16px 0 8px">Best lifts</h2>'+rows:'<p class="sub">No sets logged yet. Pick a date and log your weights and reps.</p>')+'<button class="lk" id="pb">← Back to plan</button><button class="lk" id="pc">Clear all logs</button>';
+window.scrollTo(0,0);
+Array.prototype.forEach.call(document.querySelectorAll(".wk"),function(r){r.onclick=function(){cd=r.getAttribute("data-d");cm=null;plan(DB.s,1)}});
+$("pb").onclick=function(){cd=td();cm=null;plan(DB.s)};
+$("pc").onclick=function(){if(this.getAttribute("data-s")){var all={};Object.keys(DB.log).forEach(function(k){Object.keys(DB.log[k]).forEach(function(d){all[d]=1})});DB.log={};ls();if(cl)Object.keys(all).forEach(function(d){cl.db.doc(cl.base+"/d"+d.replace(/-/g,"")).delete()});prog()}else{this.setAttribute("data-s","1");this.textContent="Tap again to confirm"}}}
+function home(){
+app.innerHTML='<h1>🏋️ Gym Coach</h1><p class="sub">Tell me about yourself and I will build your plan.</p><div class="card"><label class="f" for="n">Your name</label><input type="text" id="n" autocomplete="off"><div class="row"><div><label class="f" for="a">Age</label><input type="number" id="a" inputmode="numeric"></div><div><label class="f" for="h">Height (cm)</label><input type="number" id="h" inputmode="numeric"></div></div><div class="err" id="er"></div><button class="go" id="b">Continue</button></div>';
+$("n").value=u.n;if(u.a)$("a").value=u.a;if(u.h)$("h").value=u.h;
+$("b").onclick=function(){
+var n=$("n").value.trim(),a=+$("a").value,h=+$("h").value;
+if(!n){$("er").textContent="Please enter your name.";return}
+if(!(a>=10&&a<=90)){$("er").textContent="Enter a valid age (10 to 90).";return}
+if(!(h>=100&&h<=230)){$("er").textContent="Enter a valid height in cm.";return}
+u={n:n,a:a,h:h};DB.u=u;sv();pick()}}
+function pick(){
+app.innerHTML='<h1 id="hi"></h1><p class="sub">Choose your training system:</p><span class="chip" id="c1"></span><span class="chip" id="c2"></span><div id="ls"></div><button class="lk" id="bk">Edit my info</button>';
+$("hi").textContent="Welcome, "+u.n+" 👋";
+$("c1").textContent="Age: "+u.a;$("c2").textContent="Height: "+u.h+" cm";
+S.forEach(function(s,i){
+var b=document.createElement("button");b.className="opt";
+b.innerHTML="<i>"+(i+1)+"</i><b>"+s.n+"</b><span>"+s.d+"</span>";
+b.onclick=function(){plan(i)};$("ls").appendChild(b)});
+$("bk").onclick=home}
+var cm=null,MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function pd(s){var a=s.split("-");return Date.UTC(+a[0],+a[1]-1,+a[2])}
+function sch(i,d){var s=S[i],n=Math.round((pd(d)-Date.UTC(2026,9,31))/864e5);
+if(s.cy){var c=((n%4)+4)%4;return c?c-1:-1}
+return s.w[(new Date(pd(d)).getUTCDay()+6)%7]}
+function fd(d){var t=new Date(pd(d));return["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][t.getUTCDay()]+", "+t.getUTCDate()+" "+MN[t.getUTCMonth()].slice(0,3)+" "+t.getUTCFullYear()}
+function cal(i){
+var y=cm.y,m=cm.m,f=(new Date(Date.UTC(y,m,1)).getUTCDay()+6)%7,nd=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+var h='<div class="card"><div class="cn"><button class="lk" id="pm">‹ Prev</button><b>'+MN[m]+' '+y+'</b><button class="lk" id="nm">Next ›</button></div><div class="cg">';
+["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(x){h+='<i>'+x+'</i>'});
+for(var k=0;k<f;k++)h+='<u></u>';
+for(var d=1;d<=nd;d++){var ds=y+"-"+("0"+(m+1)).slice(-2)+"-"+("0"+d).slice(-2);
+h+='<button class="cd '+(sch(i,ds)<0?'rs':'tr')+(ds===cd?' sel':'')+(ds===td()?' tdy':'')+'" data-d="'+ds+'">'+d+'</button>'}
+return h+'</div><div class="lg"><span class="tr"></span>Training day <span class="rs"></span>Rest day</div></div>'}
+function plan(i,sc){
+DB.s=i;sv();
+if(!cm){var a=cd.split("-");cm={y:+a[0],m:+a[1]-1}}
+var s=S[i],j=sch(i,cd),h='<h1>'+s.n+'</h1><p class="sub">'+s.d+'</p><button class="go" id="b3" style="margin:0 0 14px">📈 History</button>';
+if(u.a>=40)h+='<div class="note">Start with a 10 minute warm-up, keep the weights moderate, and add load gradually.</div>';
+else if(u.a<16)h+='<div class="note">Focus on correct form with light weights, ideally with a coach.</div>';
+h+=cal(i)+'<div class="note" id="st"></div>';
+h+='<h2 id="dy" style="margin:16px 0 8px">'+fd(cd)+(cd===td()?' · Today':cd>td()?' · Upcoming':'')+'</h2>';
+if(j<0)h+='<div class="card" style="text-align:center"><div style="font-size:42px">🛌</div><b style="color:#e5484d">Rest day</b><div style="color:var(--mu)">Recover, hydrate and sleep well. Nothing to log today.</div></div>';
+else{var d=s.days[j];h+='<div class="card day"><h3>'+d[0]+'</h3><div class="m">'+d[1]+'</div>';
+d[2].split(" ").forEach(function(k){var x=E[k];
+h+='<div class="ex"><div class="top"><b>'+x[0]+'</b><a class="vid" href="'+yt(x[0])+'" target="_blank" rel="noopener noreferrer">▶ Video</a><em>'+x[1]+'</em></div>';
+h+='<div class="meta">🛠 Equipment: '+x[2]+'</div><div class="meta">🔁 Alternatives: ';
+h+=x[3].split("|").map(function(a){return'<a href="'+yt(a)+'" target="_blank" rel="noopener noreferrer">'+a+'</a>'}).join(" · ");
+h+='</div>'+sets(k,x[1])+'</div>'});
+h+='</div>'}
+h+='<button class="lk" id="b1">Change system</button><button class="lk" id="b2">New details</button>';
+app.innerHTML=h;
+if(sc)$("dy").scrollIntoView({behavior:"smooth"});else window.scrollTo(0,0);
+Array.prototype.forEach.call(document.querySelectorAll(".cd"),function(b){b.onclick=function(){cd=b.getAttribute("data-d");plan(i,1)}});
+$("pm").onclick=function(){cm.m--;if(cm.m<0){cm.m=11;cm.y--}plan(i)};
+$("nm").onclick=function(){cm.m++;if(cm.m>11){cm.m=0;cm.y++}plan(i)};
+$("b1").onclick=pick;$("b2").onclick=home;$("b3").onclick=prog;stat()}
+if(DB.u)u=DB.u;
+if(DB.u&&DB.s!=null&&S[DB.s])plan(DB.s);else home();
+cloud();
+</script>
+</body>
+</html>
