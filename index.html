@@ -59,7 +59,6 @@ button{font:inherit;cursor:pointer}
 <body>
 <main id="app"></main>
 <script>
-/* key: [name, sets, equipment, alternatives separated by | ] */
 var E={
 bp:["Barbell Bench Press","4×8","Barbell, flat bench, rack","Dumbbell Bench Press|Machine Chest Press|Push-Up"],
 ip:["Incline Dumbbell Press","3×10","Dumbbells, incline bench","Incline Barbell Press|Incline Machine Press|Incline Push-Up"],
@@ -88,8 +87,12 @@ ca:["Standing Calf Raise","4×15","Calf machine or Smith machine","Seated Calf R
 cr:["Crunch","3×15","Bodyweight","Cable Crunch|Decline Sit-Up|Machine Crunch"],
 pl:["Plank","3×45 sec","Bodyweight","Dead Bug|Ab Wheel Rollout|Hanging Knee Raise"]
 };
-/* w = the workout for Mon..Sun (index into days, -1 = rest) */
 var S=[
+{n:"Anterior / Posterior / Full Body",d:"6 days a week (3 on, 1 rest, 3 on, 1 rest)",cy:8,days:[
+["Anterior Day","Chest · Shoulders · Quads · Biceps · Core","bp ip oh lr fs le bc cr"],
+["Posterior Day","Back · Hamstrings · Glutes · Triceps · Calves","rl ht lc br ld rd pd ca"],
+["Full Body Day","Compound Anterior & Posterior focus","sq bp br rl oh bc pd"]
+]},
 {n:"Push / Pull / Legs",d:"3 training days, 1 rest day, repeating",cy:1,w:[0,1,2,0,1,2,-1],days:[
 ["Push Day","Chest · Shoulders · Triceps","bp ip oh lr pd oe"],
 ["Pull Day","Back · Biceps","pu br ld sr rd bc hc"],
@@ -106,24 +109,17 @@ var S=[
 ["Upper A","Chest · Back · Shoulders · Arms","bp br oh ld bc pd"],
 ["Lower A","Quads · Hamstrings · Core","sq rl le lc ca cr"],
 ["Upper B","Chest · Back · Shoulders · Arms","ip sr lr pu hc oe"],
-["Lower B","Quads · Glutes · Core","lp ht lc ca pl"]]},
-{n:"Anterior / Posterior",d:"4 days a week",w:[0,1,-1,0,1,-1,-1],days:[
-["Anterior (front)","Chest · Shoulders · Quads · Biceps","bp ip oh lr fs le bc cr"],
-["Posterior (back)","Back · Hamstrings · Glutes · Triceps","rl ht lc br ld rd pd ca"]]}
+["Lower B","Quads · Glutes · Core","lp ht lc ca pl"]]}
 ];
 var D=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-var app=document.getElementById("app"),u={n:"",a:0,h:0};
+var app=document.getElementById("app"),u={n:"",a:0,h:0,w:0};
 function $(i){return document.getElementById(i)}
-/* Paste direct video links here: "Exercise Name":"https://www.youtube.com/watch?v=XXXX"
-   Any exercise or alternative listed here opens that exact video; the rest open a YouTube search. */
-var V={
-/* "Barbell Bench Press":"https://www.youtube.com/watch?v=XXXX", */
-};
+var V={};
 function yt(q){return V[q]||"https://www.youtube.com/results?search_query="+encodeURIComponent(q+" proper form tutorial")}
 var DB=(function(){try{return JSON.parse(localStorage.getItem("gc1"))||{}}catch(e){return{}}})();
 DB.log=DB.log||{};
 var cd=td(),cl=null,cs="local",tm;
-function td(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function td(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-" +("0"+d.getDate()).slice(-2)}
 function ok(s){return s&&s[0]!=null&&s[0]!==""&&s[1]!=null&&s[1]!==""}
 function fm(a){return a.filter(ok).map(function(s){return s[0]+" kg × "+s[1]}).join(" · ")}
 function stat(){var e=$("st");if(!e)return;e.textContent=cs==="cloud"?"☁️ Saved to your account. Your log follows you on any device.":cs==="err"?"⚠️ Could not reach the database. Saved on this device only.":"Saved on this device. Syncing to your account…"}
@@ -182,18 +178,19 @@ Array.prototype.forEach.call(document.querySelectorAll(".wk"),function(r){r.oncl
 $("pb").onclick=function(){cd=td();cm=null;plan(DB.s)};
 $("pc").onclick=function(){if(this.getAttribute("data-s")){var all={};Object.keys(DB.log).forEach(function(k){Object.keys(DB.log[k]).forEach(function(d){all[d]=1})});DB.log={};ls();if(cl)Object.keys(all).forEach(function(d){cl.db.doc(cl.base+"/d"+d.replace(/-/g,"")).delete()});prog()}else{this.setAttribute("data-s","1");this.textContent="Tap again to confirm"}}}
 function home(){
-app.innerHTML='<h1>🏋️ Gym Coach</h1><p class="sub">Tell me about yourself and I will build your plan.</p><div class="card"><label class="f" for="n">Your name</label><input type="text" id="n" autocomplete="off"><div class="row"><div><label class="f" for="a">Age</label><input type="number" id="a" inputmode="numeric"></div><div><label class="f" for="h">Height (cm)</label><input type="number" id="h" inputmode="numeric"></div></div><div class="err" id="er"></div><button class="go" id="b">Continue</button></div>';
-$("n").value=u.n;if(u.a)$("a").value=u.a;if(u.h)$("h").value=u.h;
+app.innerHTML='<h1>🏋️ Gym Coach</h1><p class="sub">Tell me about yourself and I will build your plan.</p><div class="card"><label class="f" for="n">Your name</label><input type="text" id="n" autocomplete="off"><div class="row"><div><label class="f" for="a">Age</label><input type="number" id="a" inputmode="numeric"></div><div><label class="f" for="h">Height (cm)</label><input type="number" id="h" inputmode="numeric"></div></div><div><label class="f" for="wt">Weight (kg)</label><input type="number" id="wt" inputmode="decimal" step="any"></div><div class="err" id="er"></div><button class="go" id="b">Continue</button></div>';
+$("n").value=u.n;if(u.a)$("a").value=u.a;if(u.h)$("h").value=u.h;if(u.w)$("wt").value=u.w;
 $("b").onclick=function(){
-var n=$("n").value.trim(),a=+$("a").value,h=+$("h").value;
+var n=$("n").value.trim(),a=+$("a").value,h=+$("h").value,wt=+$("wt").value;
 if(!n){$("er").textContent="Please enter your name.";return}
 if(!(a>=10&&a<=90)){$("er").textContent="Enter a valid age (10 to 90).";return}
 if(!(h>=100&&h<=230)){$("er").textContent="Enter a valid height in cm.";return}
-u={n:n,a:a,h:h};DB.u=u;sv();pick()}}
+if(!(wt>=30&&wt<=250)){$("er").textContent="Enter a valid weight in kg.";return}
+u={n:n,a:a,h:h,w:wt};DB.u=u;sv();pick()}}
 function pick(){
-app.innerHTML='<h1 id="hi"></h1><p class="sub">Choose your training system:</p><span class="chip" id="c1"></span><span class="chip" id="c2"></span><div id="ls"></div><button class="lk" id="bk">Edit my info</button>';
+app.innerHTML='<h1 id="hi"></h1><p class="sub">Choose your training system:</p><span class="chip" id="c1"></span><span class="chip" id="c2"></span><span class="chip" id="c3"></span><div id="ls"></div><button class="lk" id="bk">Edit my info</button>';
 $("hi").textContent="Welcome, "+u.n+" 👋";
-$("c1").textContent="Age: "+u.a;$("c2").textContent="Height: "+u.h+" cm";
+$("c1").textContent="Age: "+u.a;$("c2").textContent="Height: "+u.h+" cm";$("c3").textContent="Weight: "+u.w+" kg";
 S.forEach(function(s,i){
 var b=document.createElement("button");b.className="opt";
 b.innerHTML="<i>"+(i+1)+"</i><b>"+s.n+"</b><span>"+s.d+"</span>";
@@ -202,6 +199,7 @@ $("bk").onclick=home}
 var cm=null,MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 function pd(s){var a=s.split("-");return Date.UTC(+a[0],+a[1]-1,+a[2])}
 function sch(i,d){var s=S[i],n=Math.round((pd(d)-Date.UTC(2026,9,31))/864e5);
+if(s.cy===8){var map=[0,1,2,-1,0,1,2,-1];return map[((n%8)+8)%8]}
 if(s.cy){var c=((n%4)+4)%4;return c?c-1:-1}
 return s.w[(new Date(pd(d)).getUTCDay()+6)%7]}
 function fd(d){var t=new Date(pd(d));return["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][t.getUTCDay()]+", "+t.getUTCDate()+" "+MN[t.getUTCMonth()].slice(0,3)+" "+t.getUTCFullYear()}
